@@ -8,6 +8,8 @@
     // ─── State ───
     let dictionary = [];
     let myWords = [];
+    let groups = [];
+    let activeGroup = 'all';
     let quizState = null;
     let editingIndex = -1;
     let deletingIndex = -1;
@@ -27,6 +29,7 @@
     const dictCount = $('dict-count');
 
     // My Words
+    const groupBar = $('group-bar');
     const addEn = $('add-en');
     const addTr = $('add-tr');
     const btnAdd = $('btn-add');
@@ -44,6 +47,7 @@
     const quizArea = $('quiz-area');
     const quizResults = $('quiz-results');
     const quizWordCount = $('quiz-word-count');
+    const quizGroupSelect = $('quiz-group-select');
     const qCountOptions = $('q-count-options');
     const btnMC = $('btn-mc');
     const btnWrite = $('btn-write');
@@ -67,8 +71,13 @@
     const editModal = $('edit-modal');
     const editEn = $('edit-en');
     const editTr = $('edit-tr');
+    const editGroup = $('edit-group');
     const btnEditSave = $('btn-edit-save');
     const btnEditCancel = $('btn-edit-cancel');
+    const groupModal = $('group-modal');
+    const newGroupName = $('new-group-name');
+    const btnGroupSave = $('btn-group-save');
+    const btnGroupCancel = $('btn-group-cancel');
     const deleteModal = $('delete-modal');
     const deleteMsg = $('delete-msg');
     const btnDeleteConfirm = $('btn-delete-confirm');
@@ -96,6 +105,17 @@
             myWords = data ? JSON.parse(data) : [];
         } catch (e) {
             myWords = [];
+        }
+    }
+    function saveGroups() {
+        localStorage.setItem('ingtr_groups', JSON.stringify(groups));
+    }
+    function loadGroups() {
+        try {
+            const data = localStorage.getItem('ingtr_groups');
+            groups = data ? JSON.parse(data) : [];
+        } catch (e) {
+            groups = [];
         }
     }
 
@@ -204,7 +224,9 @@
             showToast('Bu kelime zaten listenizde!', 'error');
             return false;
         }
-        myWords.push({ en, tr });
+        const entry = { en, tr };
+        if (activeGroup !== 'all') entry.group = activeGroup;
+        myWords.push(entry);
         saveMyWords();
         showToast('✓ "' + en + '" kelimelerinize eklendi', 'success');
         return true;
@@ -213,6 +235,84 @@
     // ═══════════════════════════════════════════════════════════
     //  TAB 2: MY WORDS
     // ═══════════════════════════════════════════════════════════
+
+    function renderGroupBar() {
+        groupBar.innerHTML = '';
+
+        // "Tümü" chip
+        const allBtn = document.createElement('button');
+        allBtn.className = 'group-chip' + (activeGroup === 'all' ? ' active' : '');
+        allBtn.textContent = `Tümü (${myWords.length})`;
+        allBtn.addEventListener('click', () => {
+            activeGroup = 'all';
+            renderMyWords();
+        });
+        groupBar.appendChild(allBtn);
+
+        // User-created groups
+        groups.forEach(grp => {
+            const count = myWords.filter(w => w.group === grp).length;
+            const chip = document.createElement('button');
+            chip.className = 'group-chip' + (activeGroup === grp ? ' active' : '');
+            chip.innerHTML = `<span>${esc(grp)} (${count})</span><span class="group-chip-del" title="Listeyi sil">×</span>`;
+            chip.addEventListener('click', (e) => {
+                if (e.target.classList.contains('group-chip-del')) {
+                    e.stopPropagation();
+                    deleteGroup(grp);
+                    return;
+                }
+                activeGroup = grp;
+                renderMyWords();
+            });
+            groupBar.appendChild(chip);
+        });
+
+        // "+ Yeni Liste" chip
+        const addGrpBtn = document.createElement('button');
+        addGrpBtn.className = 'group-chip group-chip-add';
+        addGrpBtn.textContent = '+ Yeni Liste';
+        addGrpBtn.addEventListener('click', () => {
+            newGroupName.value = '';
+            groupModal.style.display = 'flex';
+            newGroupName.focus();
+        });
+        groupBar.appendChild(addGrpBtn);
+    }
+
+    function deleteGroup(grp) {
+        groups = groups.filter(g => g !== grp);
+        myWords.forEach(w => {
+            if (w.group === grp) delete w.group;
+        });
+        if (activeGroup === grp) activeGroup = 'all';
+        saveGroups();
+        saveMyWords();
+        renderMyWords();
+        showToast('🗑️ "' + grp + '" listesi kaldırıldı (kelimeler Tümü altında korundu)');
+    }
+
+    btnGroupSave.addEventListener('click', createGroup);
+    newGroupName.addEventListener('keydown', e => { if (e.key === 'Enter') createGroup(); });
+    btnGroupCancel.addEventListener('click', () => groupModal.style.display = 'none');
+    groupModal.addEventListener('click', e => { if (e.target === groupModal) groupModal.style.display = 'none'; });
+
+    function createGroup() {
+        const name = newGroupName.value.trim();
+        if (!name) {
+            showToast('Liste adı yazın', 'error');
+            return;
+        }
+        if (groups.some(g => g.toLowerCase() === name.toLowerCase()) || name.toLowerCase() === 'tümü') {
+            showToast('Bu isimde bir liste zaten var', 'error');
+            return;
+        }
+        groups.push(name);
+        saveGroups();
+        activeGroup = name;
+        groupModal.style.display = 'none';
+        renderMyWords();
+        showToast('✓ "' + name + '" listesi oluşturuldu', 'success');
+    }
 
     btnAdd.addEventListener('click', addWord);
     addEn.addEventListener('keydown', e => { if (e.key === 'Enter') addTr.focus(); });
@@ -230,7 +330,9 @@
             showToast('Bu kelime zaten listenizde!', 'error');
             return;
         }
-        myWords.push({ en, tr });
+        const entry = { en, tr };
+        if (activeGroup !== 'all') entry.group = activeGroup;
+        myWords.push(entry);
         saveMyWords();
         addEn.value = '';
         addTr.value = '';
@@ -242,17 +344,28 @@
     mywordsSearch.addEventListener('input', renderMyWords);
 
     function renderMyWords() {
+        renderGroupBar();
         const q = mywordsSearch.value.trim().toLowerCase();
         myWordsList.innerHTML = '';
 
+        const groupFiltered = activeGroup === 'all'
+            ? myWords
+            : myWords.filter(w => w.group === activeGroup);
+
         const filtered = q
-            ? myWords.filter(w => w.en.toLowerCase().includes(q) || w.tr.toLowerCase().includes(q))
-            : myWords;
+            ? groupFiltered.filter(w =>
+                w.en.toLowerCase().includes(q) ||
+                w.tr.toLowerCase().includes(q) ||
+                (w.note && w.note.toLowerCase().includes(q))
+            )
+            : groupFiltered;
 
         if (filtered.length === 0) {
             mywordsEmpty.style.display = 'block';
-            if (myWords.length > 0 && q) {
+            if (groupFiltered.length > 0 && q) {
                 mywordsEmpty.querySelector('p').textContent = 'Aramanızla eşleşen kelime yok';
+            } else if (activeGroup !== 'all') {
+                mywordsEmpty.querySelector('p').textContent = `"${activeGroup}" listesinde henüz kelime yok`;
             } else {
                 mywordsEmpty.querySelector('p').textContent = 'Henüz kelime eklemediniz';
             }
@@ -267,16 +380,56 @@
         filtered.forEach((w) => {
             const realIndex = myWords.indexOf(w);
             const div = document.createElement('div');
-            div.className = 'word-item';
+            div.className = 'word-item has-note-panel';
+
+            const noteBadge = w.note ? '<span class="word-note-badge" title="Açıklama mevcut">📝</span>' : '';
+            const groupTag = (activeGroup === 'all' && w.group)
+                ? `<span class="word-group-tag">${esc(w.group)}</span>`
+                : '';
+
             div.innerHTML = `
-                <div class="word-text">
-                    <span class="word-en">${esc(w.en)}</span>
-                    <span class="word-tr">${esc(w.tr)}</span>
+                <div class="word-row" title="Açıklama eklemek için dokunun">
+                    <div class="word-text">
+                        <div style="flex:1;min-width:0;display:flex;flex-direction:column;">
+                            <span class="word-en">${esc(w.en)}${noteBadge}</span>
+                            ${groupTag}
+                        </div>
+                        <span class="word-tr">${esc(w.tr)}</span>
+                    </div>
+                    <div class="word-actions">
+                        <button class="btn-edit-word" title="Düzenle">✏️</button>
+                        <button class="btn-delete-word" title="Sil">🗑️</button>
+                    </div>
                 </div>
-                <div class="word-actions">
-                    <button class="btn-edit-word" title="Düzenle">✏️</button>
-                    <button class="btn-delete-word" title="Sil">🗑️</button>
+                <div class="word-note-box" style="display:none;">
+                    <textarea class="word-note-input" rows="2" placeholder="Açıklama veya örnek cümle yazın...">${esc(w.note || '')}</textarea>
+                    <button class="btn-primary btn-note-save">Kaydet</button>
                 </div>`;
+
+            const wordRow = div.querySelector('.word-row');
+            const noteBox = div.querySelector('.word-note-box');
+            const noteInput = div.querySelector('.word-note-input');
+            const noteSaveBtn = div.querySelector('.btn-note-save');
+
+            wordRow.addEventListener('click', () => {
+                const isOpen = noteBox.style.display !== 'none';
+                noteBox.style.display = isOpen ? 'none' : 'flex';
+                if (!isOpen) noteInput.focus();
+            });
+
+            noteSaveBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const val = noteInput.value.trim();
+                if (val) {
+                    myWords[realIndex].note = val;
+                } else {
+                    delete myWords[realIndex].note;
+                }
+                saveMyWords();
+                renderMyWords();
+                showToast(val ? '✓ Açıklama kaydedildi' : 'Açıklama temizlendi', 'success');
+            });
+
             div.querySelector('.btn-edit-word').addEventListener('click', (e) => {
                 e.stopPropagation();
                 openEditModal(realIndex);
@@ -295,6 +448,9 @@
         editingIndex = index;
         editEn.value = myWords[index].en;
         editTr.value = myWords[index].tr;
+        editGroup.innerHTML = '<option value="">Grupsuz (Sadece Tümü)</option>' +
+            groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+        editGroup.value = myWords[index].group || '';
         editModal.style.display = 'flex';
         editEn.focus();
     }
@@ -305,7 +461,13 @@
             showToast('Her iki alanı da doldurun', 'error');
             return;
         }
-        myWords[editingIndex] = { en, tr };
+        const updated = { ...myWords[editingIndex], en, tr };
+        if (editGroup.value) {
+            updated.group = editGroup.value;
+        } else {
+            delete updated.group;
+        }
+        myWords[editingIndex] = updated;
         saveMyWords();
         editModal.style.display = 'none';
         renderMyWords();
@@ -385,10 +547,17 @@
                 imported.forEach(w => {
                     const exists = myWords.some(m => m.en.toLowerCase() === w.en.toLowerCase());
                     if (!exists) {
-                        myWords.push({ en: w.en, tr: w.tr });
+                        const entry = { en: w.en, tr: w.tr };
+                        if (w.group) {
+                            entry.group = w.group;
+                            if (!groups.includes(w.group)) groups.push(w.group);
+                        }
+                        if (w.note) entry.note = w.note;
+                        myWords.push(entry);
                         added++;
                     }
                 });
+                saveGroups();
                 saveMyWords();
                 renderMyWords();
                 showToast(`✓ ${added} kelime içe aktarıldı (${imported.length - added} zaten mevcut)`, 'success');
@@ -416,25 +585,47 @@
     //  TAB 3: QUIZ
     // ═══════════════════════════════════════════════════════════
 
+    function getQuizPool() {
+        const grp = quizGroupSelect.value;
+        return grp === 'all' ? myWords : myWords.filter(w => w.group === grp);
+    }
+
+    function refreshQuizAvailability() {
+        const pool = getQuizPool();
+        const count = pool.length;
+        const label = quizGroupSelect.value === 'all' ? 'Tüm kelimelerinizde' : `"${quizGroupSelect.value}" listesinde`;
+        quizWordCount.textContent = `${label} ${count} kelime var.`;
+
+        const hasEnoughTotal = myWords.length >= 4 && count > 0;
+        btnMC.disabled = !hasEnoughTotal;
+        btnWrite.disabled = count === 0;
+
+        if (myWords.length < 4 && count > 0) {
+            quizWordCount.textContent += ' (Çoktan seçmeli için en az 4 kelime gerekli)';
+        }
+        if (count === 0) {
+            quizWordCount.textContent = 'Test yapabilmek için bu listeye kelime ekleyin.';
+        }
+    }
+
     function updateQuizSetup() {
         quizSetup.style.display = 'block';
         quizArea.style.display = 'none';
         quizResults.style.display = 'none';
 
-        const count = myWords.length;
-        quizWordCount.textContent = `Kelime listenizde ${count} kelime var.`;
-
-        const hasEnough = count >= 4;
-        btnMC.disabled = !hasEnough;
-        btnWrite.disabled = count === 0;
-
-        if (!hasEnough && count > 0) {
-            quizWordCount.textContent += ' (Çoktan seçmeli için en az 4 kelime gerekli)';
+        const prev = quizGroupSelect.value;
+        quizGroupSelect.innerHTML = `<option value="all">Tüm Kelimeler (${myWords.length})</option>` +
+            groups.map(g => {
+                const c = myWords.filter(w => w.group === g).length;
+                return `<option value="${esc(g)}">${esc(g)} (${c})</option>`;
+            }).join('');
+        if ([...quizGroupSelect.options].some(o => o.value === prev)) {
+            quizGroupSelect.value = prev;
         }
-        if (count === 0) {
-            quizWordCount.textContent = 'Test yapabilmek için önce "Kelimelerim" sekmesinden kelime ekleyin.';
-        }
+        refreshQuizAvailability();
     }
+
+    quizGroupSelect.addEventListener('change', refreshQuizAvailability);
 
     // Question count selection
     qCountOptions.addEventListener('click', e => {
@@ -445,9 +636,10 @@
     });
 
     function getSelectedCount() {
+        const pool = getQuizPool();
         const active = qCountOptions.querySelector('.q-count-btn.active');
         const val = active ? active.dataset.count : '5';
-        return val === 'all' ? myWords.length : Math.min(parseInt(val), myWords.length);
+        return val === 'all' ? pool.length : Math.min(parseInt(val), pool.length);
     }
 
     // Start quiz
@@ -455,11 +647,12 @@
     btnWrite.addEventListener('click', () => startQuiz('write'));
 
     function startQuiz(mode) {
+        const pool = getQuizPool();
         const count = getSelectedCount();
         if (count === 0) return;
 
         // Shuffle and pick
-        const shuffled = [...myWords].sort(() => Math.random() - 0.5);
+        const shuffled = [...pool].sort(() => Math.random() - 0.5);
         const questions = shuffled.slice(0, count);
 
         quizState = {
@@ -775,6 +968,7 @@
     // ─── Init ───
     async function init() {
         loadTheme();
+        loadGroups();
         loadMyWords();
         await loadDictionary();
         renderDictionary();

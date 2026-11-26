@@ -1,5 +1,5 @@
 // Service Worker — İng-Tr Sözlük PWA
-const CACHE_NAME = 'ing-tr-sozluk-v5';
+const CACHE_NAME = 'ing-tr-sozluk-v7';
 const ASSETS = [
     './',
     './index.html',
