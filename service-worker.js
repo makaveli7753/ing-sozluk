@@ -1,5 +1,5 @@
 // Service Worker — İng-Tr Sözlük PWA
-const CACHE_NAME = 'ing-tr-sozluk-v1';
+const CACHE_NAME = 'ing-tr-sozluk-v4';
 const ASSETS = [
     './',
     './index.html',
@@ -7,6 +7,7 @@ const ASSETS = [
     './app.js',
     './dictionary.json',
     './manifest.json',
+    './icon.svg',
     './icon-192.png',
     './icon-512.png'
 ];
@@ -31,27 +32,24 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Fetch: cache-first strategy
+// Fetch: network-first with cache fallback (offline support + fresh updates)
 self.addEventListener('fetch', event => {
     event.respondWith(
-        caches.match(event.request)
-            .then(cached => {
-                if (cached) return cached;
-                return fetch(event.request).then(response => {
-                    // Don't cache non-ok or non-basic responses
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
-                        return response;
-                    }
+        fetch(event.request)
+            .then(response => {
+                if (response && response.status === 200 && response.type === 'basic') {
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-                    return response;
-                });
+                }
+                return response;
             })
             .catch(() => {
-                // Fallback for navigate requests
-                if (event.request.mode === 'navigate') {
-                    return caches.match('./index.html');
-                }
+                return caches.match(event.request).then(cached => {
+                    if (cached) return cached;
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('./index.html');
+                    }
+                });
             })
     );
 });

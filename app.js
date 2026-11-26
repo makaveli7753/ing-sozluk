@@ -176,8 +176,10 @@
             const div = document.createElement('div');
             div.className = 'word-item';
             div.innerHTML = `
-                <span class="word-en">${esc(w.en)}</span>
-                <span class="word-tr">${esc(w.tr)}</span>
+                <div class="word-text">
+                    <span class="word-en">${esc(w.en)}</span>
+                    <span class="word-tr">${esc(w.tr)}</span>
+                </div>
                 <div class="word-actions">
                     <button class="btn-add-to-list" title="Kelimelerime Ekle">+</button>
                 </div>`;
@@ -267,8 +269,10 @@
             const div = document.createElement('div');
             div.className = 'word-item';
             div.innerHTML = `
-                <span class="word-en">${esc(w.en)}</span>
-                <span class="word-tr">${esc(w.tr)}</span>
+                <div class="word-text">
+                    <span class="word-en">${esc(w.en)}</span>
+                    <span class="word-tr">${esc(w.tr)}</span>
+                </div>
                 <div class="word-actions">
                     <button class="btn-edit-word" title="Düzenle">✏️</button>
                     <button class="btn-delete-word" title="Sil">🗑️</button>
@@ -663,6 +667,102 @@
         return div.innerHTML;
     }
 
+    // ─── Theme & Color Palette ───
+    const btnTheme = $('btn-theme');
+    const btnPalette = $('btn-palette');
+    const paletteModal = $('palette-modal');
+    const btnPaletteClose = $('btn-palette-close');
+    const btnPaletteReset = $('btn-palette-reset');
+    const swatchesEn = $('swatches-en');
+    const swatchesTr = $('swatches-tr');
+    const customColorEn = $('custom-color-en');
+    const customColorTr = $('custom-color-tr');
+
+    function applyWordColors() {
+        const enColor = localStorage.getItem('ingtr_word_en_color');
+        const trColor = localStorage.getItem('ingtr_word_tr_color');
+
+        if (enColor) {
+            document.body.style.setProperty('--word-en-color', enColor);
+            customColorEn.value = enColor;
+        } else {
+            document.body.style.removeProperty('--word-en-color');
+        }
+
+        if (trColor) {
+            document.body.style.setProperty('--word-tr-color', trColor);
+            customColorTr.value = trColor;
+        } else {
+            document.body.style.removeProperty('--word-tr-color');
+        }
+
+        updateActiveSwatches(swatchesEn, enColor);
+        updateActiveSwatches(swatchesTr, trColor);
+    }
+
+    function updateActiveSwatches(container, activeColor) {
+        container.querySelectorAll('.color-swatch').forEach(btn => {
+            const match = activeColor && btn.dataset.color.toLowerCase() === activeColor.toLowerCase();
+            btn.classList.toggle('active', !!match);
+        });
+    }
+
+    function setTheme(dark) {
+        document.body.classList.toggle('dark-theme', dark);
+        btnTheme.textContent = dark ? '☀️' : '🌙';
+        localStorage.setItem('ingtr_theme', dark ? 'dark' : 'light');
+        const metaTheme = document.querySelector('meta[name="theme-color"]');
+        if (metaTheme) metaTheme.content = dark ? '#0F172A' : '#4A90D9';
+        applyWordColors();
+    }
+
+    function loadTheme() {
+        const saved = localStorage.getItem('ingtr_theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(saved === 'dark' || (!saved && prefersDark));
+    }
+
+    btnTheme.addEventListener('click', () => {
+        const isDark = document.body.classList.contains('dark-theme');
+        setTheme(!isDark);
+    });
+
+    btnPalette.addEventListener('click', () => {
+        applyWordColors();
+        paletteModal.style.display = 'flex';
+    });
+    btnPaletteClose.addEventListener('click', () => paletteModal.style.display = 'none');
+    paletteModal.addEventListener('click', e => {
+        if (e.target === paletteModal) paletteModal.style.display = 'none';
+    });
+
+    swatchesEn.addEventListener('click', e => {
+        const btn = e.target.closest('.color-swatch');
+        if (!btn) return;
+        localStorage.setItem('ingtr_word_en_color', btn.dataset.color);
+        applyWordColors();
+    });
+    swatchesTr.addEventListener('click', e => {
+        const btn = e.target.closest('.color-swatch');
+        if (!btn) return;
+        localStorage.setItem('ingtr_word_tr_color', btn.dataset.color);
+        applyWordColors();
+    });
+    customColorEn.addEventListener('input', e => {
+        localStorage.setItem('ingtr_word_en_color', e.target.value);
+        applyWordColors();
+    });
+    customColorTr.addEventListener('input', e => {
+        localStorage.setItem('ingtr_word_tr_color', e.target.value);
+        applyWordColors();
+    });
+    btnPaletteReset.addEventListener('click', () => {
+        localStorage.removeItem('ingtr_word_en_color');
+        localStorage.removeItem('ingtr_word_tr_color');
+        applyWordColors();
+        showToast('✓ Varsayılan renklere dönüldü', 'success');
+    });
+
     // ─── Service Worker Registration ───
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -674,6 +774,7 @@
 
     // ─── Init ───
     async function init() {
+        loadTheme();
         loadMyWords();
         await loadDictionary();
         renderDictionary();

@@ -9,7 +9,8 @@
     <meta name="description" content="Kişisel İngilizce-Türkçe Sözlük ve Kelime Test Uygulaması">
     <title>İng-Tr Sözlük</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icon-192.png" type="image/png">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="icon-192.png" type="image/png">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -20,6 +21,10 @@
     <!-- App Header -->
     <header class="app-header">
         <h1>📖 İng-Tr Sözlük</h1>
+        <div class="header-actions">
+            <button id="btn-palette" class="btn-header-icon" title="Kelime Renkleri">🎨</button>
+            <button id="btn-theme" class="btn-header-icon" title="Tema Değiştir">🌙</button>
+        </div>
     </header>
 
     <!-- Tab Contents -->
@@ -189,6 +194,42 @@
             <div class="modal-buttons">
                 <button id="btn-delete-confirm" class="btn-danger">Sil</button>
                 <button id="btn-delete-cancel" class="btn-secondary">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color Palette Modal -->
+    <div id="palette-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content palette-modal-content">
+            <h3>🎨 Kelime Renk Paleti</h3>
+            <div class="palette-section">
+                <label>İngilizce Kelime Rengi</label>
+                <div class="color-swatches" id="swatches-en">
+                    <button class="color-swatch" data-color="#FBBF24" style="background:#FBBF24" title="Altın Sarısı"></button>
+                    <button class="color-swatch" data-color="#38BDF8" style="background:#38BDF8" title="Parlak Mavi"></button>
+                    <button class="color-swatch" data-color="#34D399" style="background:#34D399" title="Zümrüt Yeşili"></button>
+                    <button class="color-swatch" data-color="#FB7185" style="background:#FB7185" title="Mercan Pembe"></button>
+                    <button class="color-swatch" data-color="#A78BFA" style="background:#A78BFA" title="Lavanta Mor"></button>
+                    <button class="color-swatch" data-color="#F8FAFC" style="background:#F8FAFC" title="Beyaz"></button>
+                    <button class="color-swatch" data-color="#1D4ED8" style="background:#1D4ED8" title="Koyu Mavi"></button>
+                    <input type="color" id="custom-color-en" class="color-picker-input" title="Özel Renk Seç">
+                </div>
+            </div>
+            <div class="palette-section">
+                <label>Türkçe Anlam Rengi</label>
+                <div class="color-swatches" id="swatches-tr">
+                    <button class="color-swatch" data-color="#F1F5F9" style="background:#F1F5F9" title="Açık Beyaz"></button>
+                    <button class="color-swatch" data-color="#CBD5E1" style="background:#CBD5E1" title="Gümüş Gri"></button>
+                    <button class="color-swatch" data-color="#A7F3D0" style="background:#A7F3D0" title="Nane Yeşili"></button>
+                    <button class="color-swatch" data-color="#FDE68A" style="background:#FDE68A" title="Açık Sarı"></button>
+                    <button class="color-swatch" data-color="#1E293B" style="background:#1E293B" title="Antrasit"></button>
+                    <button class="color-swatch" data-color="#475569" style="background:#475569" title="Koyu Gri"></button>
+                    <input type="color" id="custom-color-tr" class="color-picker-input" title="Özel Renk Seç">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="btn-palette-reset" class="btn-secondary">Varsayılan</button>
+                <button id="btn-palette-close" class="btn-primary">Tamam</button>
             </div>
         </div>
     </div>

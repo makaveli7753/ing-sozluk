@@ -24,6 +24,8 @@
     --tab-height: 60px;
     --header-height: 52px;
     --transition: 0.2s ease;
+    --word-en-color: #1D4ED8;
+    --word-tr-color: #1E293B;
 }
 
 /* ---------- Reset & Base ---------- */
@@ -51,6 +53,7 @@ body {
 input, button, textarea {
     font-family: inherit;
     font-size: inherit;
+    color: inherit;
 }
 
 /* ---------- Toast ---------- */
@@ -99,6 +102,38 @@ input, button, textarea {
     font-size: 1.15rem;
     font-weight: 700;
     letter-spacing: -0.3px;
+}
+
+/* ---------- Header Actions & Theme Toggle ---------- */
+.header-actions {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-header-icon {
+    background: rgba(255,255,255,0.16);
+    border: none;
+    font-size: 1.15rem;
+    cursor: pointer;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition), transform 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-header-icon:hover {
+    background: rgba(255,255,255,0.28);
+}
+.btn-header-icon:active {
+    transform: scale(0.9);
 }
 
 /* ---------- Tab Bar ---------- */
@@ -216,33 +251,49 @@ input, button, textarea {
 .word-item {
     display: flex;
     align-items: center;
-    padding: 10px 12px;
+    padding: 11px 12px;
     background: var(--surface);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow);
-    gap: 8px;
-    min-height: 48px;
+    gap: 10px;
+    min-height: 50px;
     transition: transform var(--transition);
 }
 .word-item:active {
     transform: scale(0.98);
 }
+.word-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
 .word-en {
     flex: 1;
-    font-weight: 600;
-    color: var(--primary-dark);
-    font-size: 0.95rem;
+    min-width: 0;
+    font-weight: 700;
+    color: var(--word-en-color);
+    font-size: 0.98rem;
+    line-height: 1.35;
+    word-break: break-word;
 }
 .word-tr {
     flex: 1;
-    color: var(--text);
-    font-size: 0.9rem;
-    text-align: right;
+    min-width: 0;
+    color: var(--word-tr-color);
+    font-size: 0.92rem;
+    line-height: 1.35;
+    text-align: left;
+    word-break: break-word;
 }
 .word-actions {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     flex-shrink: 0;
+    padding-left: 10px;
+    border-left: 1px solid var(--border);
 }
 .word-actions button {
     width: 32px;
@@ -783,6 +834,129 @@ input, button, textarea {
     .word-item {
         padding: 12px 16px;
     }
+}
+
+/* ============================================================
+   DARK THEME
+   ============================================================ */
+body.dark-theme {
+    --primary: #60A5FA;
+    --primary-dark: #93BBFD;
+    --primary-light: #1E3A5F;
+    --success: #4ADE80;
+    --success-bg: #14532D;
+    --danger: #F87171;
+    --danger-bg: #7F1D1D;
+    --warning: #FBBF24;
+    --bg: #0F172A;
+    --surface: #1E293B;
+    --text: #E2E8F0;
+    --text-secondary: #94A3B8;
+    --border: #334155;
+    --shadow: 0 2px 8px rgba(0,0,0,0.3);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
+    --word-en-color: #FBBF24;
+    --word-tr-color: #F1F5F9;
+}
+
+/* ---------- Color Palette Modal ---------- */
+.palette-section {
+    margin-bottom: 16px;
+}
+.palette-section label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+.color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+.color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+}
+.color-swatch:hover {
+    transform: scale(1.12);
+}
+.color-swatch.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    transform: scale(1.1);
+}
+.color-picker-input {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    background: none;
+    overflow: hidden;
+}
+body.dark-theme .app-header {
+    background: #1E293B;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+body.dark-theme .tab-bar {
+    background: #1E293B;
+    border-top-color: var(--border);
+}
+body.dark-theme .toast {
+    background: #334155;
+    color: #E2E8F0;
+}
+body.dark-theme .toast.toast-success {
+    background: var(--success);
+    color: #fff;
+}
+body.dark-theme .toast.toast-error {
+    background: var(--danger);
+    color: #fff;
+}
+body.dark-theme .btn-edit-word {
+    background: rgba(251, 191, 36, 0.15);
+}
+body.dark-theme .q-count-btn {
+    background: var(--surface);
+    color: var(--text);
+}
+body.dark-theme .btn-quiz-start {
+    background: var(--surface);
+    color: var(--text);
+}
+body.dark-theme .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+}
+body.dark-theme .modal-content input {
+    background: #0F172A;
+}
+body.dark-theme .quiz-option {
+    color: var(--text);
+}
+body.dark-theme .quiz-option.correct {
+    color: var(--success);
+}
+body.dark-theme .quiz-option.wrong {
+    color: var(--danger);
+}
+body.dark-theme ::selection {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+body.dark-theme ::-webkit-scrollbar-thumb {
+    background: #334155;
 }
 
 /* ---------- Scrollbar ---------- */
