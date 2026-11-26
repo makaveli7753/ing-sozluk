@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4A90D9">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Kişisel İngilizce-Türkçe Sözlük ve Kelime Test Uygulaması">
+    <title>İng-Tr Sözlük</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- App Header -->
+    <header class="app-header">
+        <h1>📖 İng-Tr Sözlük</h1>
+    </header>
+
+    <!-- Tab Contents -->
+    <main class="tab-contents">
+        <!-- ==================== TAB 1: DICTIONARY ==================== -->
+        <section id="content-dictionary" class="tab-content active">
+            <div class="search-bar">
+                <input type="text" id="dict-search" placeholder="🔍 İngilizce kelime ara..." autocomplete="off" spellcheck="false">
+                <button id="dict-clear" class="btn-clear" style="display:none;">✕</button>
+            </div>
+            <div id="dict-count" class="result-count"></div>
+            <div id="dict-list" class="word-list"></div>
+            <div id="dict-empty" class="empty-state">
+                <div class="empty-icon">📚</div>
+                <p>Aramaya başlamak için yukarıya yazın</p>
+                <p class="empty-sub">1200+ kelime arasında arayın</p>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: MY WORDS ==================== -->
+        <section id="content-mywords" class="tab-content">
+            <div class="add-word-form">
+                <input type="text" id="add-en" placeholder="İngilizce Kelime" autocomplete="off" spellcheck="false">
+                <input type="text" id="add-tr" placeholder="Türkçe Anlamı" autocomplete="off">
+                <button id="btn-add" class="btn-primary">Ekle</button>
+            </div>
+
+            <div class="action-buttons">
+                <button id="btn-export-json" class="btn-secondary" title="JSON olarak dışa aktar">
+                    <span>📥</span> JSON
+                </button>
+                <button id="btn-export-txt" class="btn-secondary" title="TXT olarak dışa aktar">
+                    <span>📥</span> TXT
+                </button>
+                <button id="btn-import" class="btn-secondary" title="Dosyadan içe aktar">
+                    <span>📤</span> İçe Aktar
+                </button>
+                <input type="file" id="import-file" accept=".json,.txt" hidden>
+            </div>
+
+            <div class="my-words-search">
+                <input type="text" id="mywords-search" placeholder="🔍 Listemde ara..." autocomplete="off">
+            </div>
+
+            <div id="mywords-count" class="result-count"></div>
+            <div id="my-words-list" class="word-list"></div>
+            <div id="mywords-empty" class="empty-state">
+                <div class="empty-icon">📝</div>
+                <p>Henüz kelime eklemediniz</p>
+                <p class="empty-sub">Yukarıdan ekleyin veya Sözlük sekmesinden <strong>+</strong> ile aktarın</p>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: QUIZ ==================== -->
+        <section id="content-quiz" class="tab-content">
+            <!-- Quiz Setup -->
+            <div id="quiz-setup" class="quiz-panel">
+                <div class="quiz-setup-header">
+                    <div class="quiz-setup-icon">🧪</div>
+                    <h2>Kelime Testi</h2>
+                    <p class="quiz-info" id="quiz-word-count"></p>
+                </div>
+
+                <div class="quiz-option-group">
+                    <label>Soru Sayısı:</label>
+                    <div class="quiz-count-options" id="q-count-options">
+                        <button class="q-count-btn active" data-count="5">5</button>
+                        <button class="q-count-btn" data-count="10">10</button>
+                        <button class="q-count-btn" data-count="20">20</button>
+                        <button class="q-count-btn" data-count="all">Tümü</button>
+                    </div>
+                </div>
+
+                <div class="quiz-option-group">
+                    <label>Test Modu:</label>
+                    <div class="quiz-mode-buttons">
+                        <button id="btn-mc" class="btn-quiz-start">
+                            <span class="btn-quiz-icon">🔘</span>
+                            <span>Çoktan Seçmeli</span>
+                        </button>
+                        <button id="btn-write" class="btn-quiz-start">
+                            <span class="btn-quiz-icon">✍️</span>
+                            <span>Yazarak Cevapla</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Area -->
+            <div id="quiz-area" class="quiz-panel" style="display:none;">
+                <div class="quiz-header">
+                    <span id="quiz-progress" class="quiz-progress-text">1 / 10</span>
+                    <span id="quiz-score-live" class="quiz-score-live">✅ 0 &nbsp; ❌ 0</span>
+                </div>
+                <div class="quiz-progress-bar">
+                    <div id="quiz-progress-fill" class="quiz-progress-fill"></div>
+                </div>
+
+                <div class="quiz-question">
+                    <h2 id="quiz-word" class="quiz-word-display"></h2>
+                    <p class="quiz-instruction" id="quiz-instruction"></p>
+                </div>
+
+                <!-- Multiple Choice -->
+                <div id="quiz-options" class="quiz-options"></div>
+
+                <!-- Written Answer -->
+                <div id="quiz-input-area" class="quiz-input-area" style="display:none;">
+                    <input type="text" id="quiz-answer" placeholder="Türkçe anlamını yazın..." autocomplete="off">
+                    <button id="btn-check" class="btn-primary btn-check">Kontrol Et</button>
+                </div>
+
+                <div id="quiz-feedback" class="quiz-feedback"></div>
+                <button id="btn-next" class="btn-next" style="display:none;">Sonraki →</button>
+            </div>
+
+            <!-- Quiz Results -->
+            <div id="quiz-results" class="quiz-panel" style="display:none;">
+                <div class="results-header">
+                    <div class="results-icon">📊</div>
+                    <h2>Test Sonuçları</h2>
+                </div>
+                <div id="result-score" class="result-score"></div>
+                <div id="result-wrong-section" style="display:none;">
+                    <h3 class="wrong-title">❌ Yanlış Bilinen Kelimeler</h3>
+                    <div id="result-wrong-list" class="result-wrong-list"></div>
+                </div>
+                <button id="btn-restart" class="btn-primary btn-restart">🔄 Yeni Test</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Tab Bar -->
+    <nav class="tab-bar">
+        <button class="tab-btn active" data-tab="dictionary">
+            <span class="tab-icon">📚</span>
+            <span class="tab-label">Sözlük</span>
+        </button>
+        <button class="tab-btn" data-tab="mywords">
+            <span class="tab-icon">📝</span>
+            <span class="tab-label">Kelimelerim</span>
+        </button>
+        <button class="tab-btn" data-tab="quiz">
+            <span class="tab-icon">🧪</span>
+            <span class="tab-label">Test</span>
+        </button>
+    </nav>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h3>✏️ Kelimeyi Düzenle</h3>
+            <input type="text" id="edit-en" placeholder="İngilizce Kelime" autocomplete="off">
+            <input type="text" id="edit-tr" placeholder="Türkçe Anlamı" autocomplete="off">
+            <div class="modal-buttons">
+                <button id="btn-edit-save" class="btn-primary">Kaydet</button>
+                <button id="btn-edit-cancel" class="btn-secondary">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="delete-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h3>🗑️ Kelimeyi Sil</h3>
+            <p id="delete-msg">Bu kelimeyi silmek istediğinize emin misiniz?</p>
+            <div class="modal-buttons">
+                <button id="btn-delete-confirm" class="btn-danger">Sil</button>
+                <button id="btn-delete-cancel" class="btn-secondary">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

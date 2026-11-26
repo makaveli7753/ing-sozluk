@@ -1,0 +1,26 @@
+{
+  "name": "İngilizce-Türkçe Sözlük",
+  "short_name": "İng-Tr Sözlük",
+  "description": "Kişisel İngilizce-Türkçe Sözlük ve Kelime Test Uygulaması",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F0F2F5",
+  "theme_color": "#4A90D9",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
